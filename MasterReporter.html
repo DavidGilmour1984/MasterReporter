@@ -928,16 +928,41 @@ function handleSubjectClick(code) {
      ------------------------------------------------------------- */
 
   // Extract the base subject code (e.g. from "09SCI-DCG" → "09SCI")
-  const base = code.split("-")[0].trim().toUpperCase();
+// NEW: Extract the subject code between the two hyphens
+// Example: "9PB-09SCI-DCG" -> "09SCI"
+let base = null;
+const parts = code.split("-");
+if (parts.length >= 3) {
+  base = parts[1].trim().toUpperCase();   // middle section
+} else {
+  // fallback: original behaviour
+  base = code.split("-")[0].trim().toUpperCase();
+}
 
   // Find the correct #EOY heading in docComments
   let bestMatch = null;
+const upperBase = base.toUpperCase();
+
+// 1️⃣ Exact subject-code match inside parentheses e.g. (Physics – 11PHX)
+for (const heading in docComments) {
+  const match = heading.match(/\((.*?)\)/); 
+  if (match && match[1].toUpperCase() === upperBase) {
+    bestMatch = heading;
+    break;
+  }
+}
+
+// 2️⃣ Otherwise match whole-word only (NOT partial)
+if (!bestMatch) {
   for (const heading in docComments) {
-    if (heading.toUpperCase().includes(base)) {
+    const words = heading.toUpperCase().split(/[^A-Z0-9]+/);
+    if (words.includes(upperBase)) {
       bestMatch = heading;
       break;
     }
   }
+}
+
 
   if (bestMatch) {
     const subjectSelect = document.getElementById("subjectSelect");
