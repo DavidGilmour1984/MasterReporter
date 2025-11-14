@@ -85,7 +85,7 @@
   }
 
   #subjectCardContainer {
-    max-height: 260px;
+    max-height: 150px;
     overflow-y: auto;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -117,7 +117,7 @@
   }
 
   #subjectStudentList {
-    max-height: 260px;
+    max-height: 200px;
     overflow-y: auto;
     border-radius: 8px;
     border: 1px solid var(--border);
@@ -371,7 +371,7 @@
     <div class="side-card">
       <h2>Class List</h2>
       <div id="subjectStudentList">
-        Load StudentList and choose a subject to see students.
+        Load StudentList.csv and choose a subject to see students.
       </div>
     </div>
 
@@ -385,8 +385,7 @@
 
       <div class="button-container">
         <button style="background:#43a047;" onmouseover="this.style.background='#2e7d32'" onmouseout="this.style.background='#43a047'" onclick="copyToClipboard()">Copy Comment</button>
-        <button onclick="clearName()">Clear Name</button>
-        <button onclick="resetComments()">Clear Comments</button>
+        <button onclick="resetComments()">Clear Comment</button>
       </div>
 
       <!-- Hidden file inputs -->
@@ -400,7 +399,7 @@
           onmouseover="this.style.background='#ef6c00'"
           onmouseout="this.style.background='#f57c00'"
           onclick="document.getElementById('fileInput').click();">
-          Load StudentList
+          Load StudentList.csv
         </button>
 
         <button
@@ -408,7 +407,7 @@
           onmouseover="this.style.background='#ef6c00'"
           onmouseout="this.style.background='#f57c00'"
           onclick="document.getElementById('commentInput').click();">
-          Load Comments
+          Load Comments.docx
         </button>
 
 <div id="subjectSelectWrapper"
@@ -474,8 +473,8 @@
     <h2>Instructions</h2>
 
     <h3>Load Files</h3>
-    <p>Click <b>Load StudentList</b> to upload your student list spreadsheet. This must include the full subject codes in Column F.</p>
-    <p>Click <b>Load Comments</b> to upload the Word comment bank file containing the #EOY headings and comment sets.</p>
+    <p>Click <b>Load StudentList.csv</b> to upload your student list spreadsheet. This must include the full subject codes in Column F.</p>
+    <p>Click <b>Load Comments.docx</b> to upload the Word comment bank file containing the #EOY headings and comment sets.</p>
 
     <h3>Subjects & Classes (Left Panel)</h3>
     <ul>
@@ -502,8 +501,7 @@
 
     <h3>Editing & Resetting</h3>
     <ul>
-      <li><b>Clear Name</b> removes the student.</li>
-      <li><b>Clear Comments</b> resets dropdowns.</li>
+      <li><b>Clear Comment</b> resets dropdowns.</li>
       <li><b>Copy Comment</b> copies the output.</li>
     </ul>
 
