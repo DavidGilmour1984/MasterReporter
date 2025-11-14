@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Report Comment Generator</title>
+<style>
+  :root {
+    --primary: #1e88e5;
+    --secondary: #f5f5f5;
+    --text: #333;
+    --border: #ccc;
+    --danger: #e53935;
+  }
+
+  body {
+    font-family: 'Helvetica Neue', sans-serif;
+    background-color: var(--secondary);
+    margin: 0;
+    padding: 2em;
+    color: var(--text);
+  }
+
+  h1 { font-size: 2em; color: var(--primary); margin: 0; }
+
+  header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 0.5em;
+  }
+
+  #instructionsBtn {
+    font-size: 1em;
+    padding: 0.5em 1em;
+    background: white;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #instructionsBtn:hover { background: var(--primary); color: white; }
+
+  /* Page layout */
+  .page-layout {
+    display: flex;
+    gap: 1em;
+    align-items: flex-start;
+  }
+
+  .side-panel {
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8em;
+  }
+
+  .main-panel {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .side-card {
+    background: white;
+    padding: 0.8em;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    box-sizing: border-box;
+  }
+
+  .side-card h2 {
+    margin: 0 0 0.4em 0;
+    font-size: 1.1em;
+    color: var(--primary);
+  }
+
+  #subjectSearch {
+    width: 100%;
+    padding: 0.5em;
+    font-size: 0.95em;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    box-sizing: border-box;
+    margin-bottom: 0.4em;
+  }
+
+  #subjectCardContainer {
+    max-height: 260px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 0.3em;
+    box-sizing: border-box;
+    background: #fafafa;
+  }
+
+  .subject-pill {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.35em 0.5em;
+    margin-bottom: 0.25em;
+    font-size: 0.95em;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .subject-pill:hover {
+    background: #e3f2fd;
+  }
+
+  .subject-pill.selected {
+    background: #bbdefb;
+  }
+
+  #subjectStudentList {
+    max-height: 260px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 0.4em;
+    box-sizing: border-box;
+    background: #fafafa;
+    font-size: 0.95em;
+  }
+
+  .student-pill {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.35em 0.5em;
+    margin-bottom: 0.25em;
+    font-size: 0.95em;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .student-pill:hover {
+    background: #e8f5e9;
+  }
+
+  .student-pill span.year {
+    font-weight: bold;
+    margin-right: 0.3em;
+  }
+
+  /* Top row in main panel */
+  .top-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-bottom: 1em;
+  }
+
+  .button-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    flex-wrap: wrap;
+  }
+
+  .button-container button {
+    font-size: 1em;
+    padding: 0.6em 1em;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .button-container button:hover { background-color: #1565c0; }
+
+  .file-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    flex-wrap: wrap;
+  }
+
+  .file-buttons button {
+    font-size:1em;
+    padding:0.6em 1em;
+    background-color:var(--primary);
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .file-buttons button:hover { background-color:#1565c0; }
+
+  .field-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6em;
+    margin-bottom: 0.4em;
+  }
+  .field-row label {
+    text-align: left;
+    min-width: 120px;
+    font-weight: bold;
+  }
+  .field-row select,
+  .field-row input {
+    flex: 1;
+  }
+  .field-row input[type="file"],
+  .field-row input[list],
+  .field-row select {
+    padding: 0.6em;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Student + subject (manual) */
+  .inline-group, .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em;
+    margin-bottom: 0.2em;
+    justify-content: center;
+  }
+
+  .inline-group > div,
+  .column {
+    background: white;
+    padding: 0.4em;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    flex: 1 1 48%;
+    max-width: 48%;
+    box-sizing: border-box;
+  }
+
+  /* Comment blocks */
+  .dup-btn, .remove-btn {
+    border: 1px solid var(--border);
+    background: white;
+    font-size: 1.2em;
+    font-weight: bold;
+    width: 2em;
+    height: 2em;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .dup-btn { color: var(--primary); }
+  .remove-btn { color: var(--danger); }
+
+  /* Output */
+  .output-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5em;
+    margin-bottom: 1em;
+  }
+  .student-pill.selected-student {
+  background: #c8e6c9 !important;   /* green highlight */
+  border-left: 4px solid #43a047;    /* stronger left accent */
+}
+
+  textarea#output {
+    flex: 1 1 600px;
+    height: 180px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 1em;
+    padding: 1em;
+    background-color: #fff;
+    resize: vertical;
+  }
+
+  /* Modal */
+  #instructionsModal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+  }
+  #instructionsContent {
+    background: white;
+    padding: 1.5em;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80%;
+    overflow-y: auto;
+  }
+  #instructionsContent h2 { margin-top: 0; color: var(--primary); }
+  #closeInstructions {
+    float: right;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--danger);
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  @media (max-width: 1024px) {
+    .page-layout {
+      flex-direction: column;
+    }
+    .side-panel {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .side-card {
+      flex: 1 1 260px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .top-row,
+    .inline-group,
+    .output-container {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .button-container {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    .button-container button {
+      flex: 1;
+    }
+    .field-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .inline-group > div,
+    .column {
+      max-width: 100%;
+      flex: 1 1 100%;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Report Comment Generator</h1>
+  <button id="instructionsBtn">Instructions</button>
+</header>
+
+<div class="page-layout">
+
+  <!-- LEFT COLUMN: SUBJECT + STUDENT CARDS -->
+  <aside class="side-panel">
+
+    <!-- Subject search + list -->
+    <div class="side-card">
+      <h2>Subjects</h2>
+      <input id="subjectSearch" placeholder="Search subject code…" />
+      <div id="subjectCardContainer">
+        <!-- Subject buttons go here -->
+      </div>
+    </div>
+
+    <!-- Students in selected subject -->
+    <div class="side-card">
+      <h2>Students in subject</h2>
+      <div id="subjectStudentList">
+        Load Names and choose a subject to see students.
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- RIGHT COLUMN: EXISTING CONTROLS + COMMENT AREA -->
+  <main class="main-panel">
+
+    <!-- Top row: buttons + file load + comment subject dropdown -->
+    <div class="top-row">
+
+      <div class="button-container">
+        <button style="background:#43a047;" onmouseover="this.style.background='#2e7d32'" onmouseout="this.style.background='#43a047'" onclick="copyToClipboard()">Copy Comment</button>
+        <button onclick="clearName()">Clear Name</button>
+        <button onclick="resetComments()">Clear Comments</button>
+
+      </div>
+
+      <!-- Hidden file inputs -->
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+      <input type="file" id="commentInput" accept=".docx" style="display:none;">
+
+      <!-- Buttons + dropdown in one row -->
+      <div style="display:flex; align-items:center; gap:0.7em; flex-wrap:wrap;">
+
+        <button
+          style="font-size:1em; padding:0.6em 1em; background:#f57c00; color:white; border:none; border-radius:8px; cursor:pointer;"
+          onmouseover="this.style.background='#ef6c00'"
+          onmouseout="this.style.background='#f57c00'"
+          onclick="document.getElementById('fileInput').click();">
+          Load Names
+        </button>
+
+        <button
+          style="font-size:1em; padding:0.6em 1em; background:#f57c00; color:white; border:none; border-radius:8px; cursor:pointer;"
+          onmouseover="this.style.background='#ef6c00'"
+          onmouseout="this.style.background='#f57c00'"
+          onclick="document.getElementById('commentInput').click();">
+          Load Comments
+        </button>
+
+        <!-- Comment subject dropdown moved here -->
+        <select id="subjectSelect"
+                style="padding:0.6em; font-size:1em; border-radius:6px; border:1px solid var(--border); min-width:220px;">
+        </select>
+
+        <datalist id="studentList"></datalist>
+      </div>
+
+    </div>
+
+    <!-- Comment blocks wrapper -->
+    <!-- Hidden input used by JS to store selected student -->
+<input id="studentInput" type="text" style="display:none;">
+
+    <div id="comment-blocks">
+      <div class="row comment-block">
+        <div class="column">
+          <div class="field-row">
+            <label>Does well in...</label>
+            <select class="goodIntro"></select>
+          </div>
+          <div class="good-selects"></div>
+        </div>
+
+        <div class="column">
+          <div class="field-row">
+            <label>Work on...</label>
+            <select class="workIntro"></select>
+          </div>
+          <div class="work-selects"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div class="output-container">
+      <textarea id="output" readonly></textarea>
+    </div>
+
+  </main>
+</div>
+
+<!-- Instructions Modal -->
+<div id="instructionsModal">
+  <div id="instructionsContent">
+    <button id="closeInstructions">&times;</button>
+    <h2>Instructions</h2>
+
+    <h3>Load Files</h3>
+    <p>Click <b>Load Names</b> to upload your student list spreadsheet (including subject codes in Column F).</p>
+    <p>Click <b>Load Comments</b> to upload the prepared comment bank Word file.</p>
+
+    <h3>Subjects & Classes</h3>
+    <p>Use the <b>Subjects</b> panel on the left:</p>
+    <ul>
+      <li>Search by subject code (as it appears in Column F of the CSV).</li>
+      <li>Click a subject to see all students enrolled in that subject.</li>
+      <li>Students are listed alphabetically; click a student to load their name into the generator.</li>
+    </ul>
+
+    <h3>Select Student & Comment Subject</h3>
+    <p>You can also start typing a name in the <b>Search student</b> box (auto-complete).</p>
+    <p>Pick a subject from the <b>Comment subject</b> dropdown (from the Word comment bank headings).</p>
+
+    <h3>Choose Comments</h3>
+    <ul>
+      <li><b>Does well in...</b> → positive intro + dropdowns for strengths.</li>
+      <li><b>Work on...</b> → improvement intro + dropdowns for next steps.</li>
+    </ul>
+    <p>Use ➕ to duplicate a dropdown row, and ❌ to remove one.</p>
+
+    <h3>Editing Shortcuts</h3>
+    <p>Use <b>Clear Name</b> to wipe the student name.</p>
+    <p>Use <b>Clear Comments</b> to clear all dropdowns and the output.</p>
+
+    <h3>Copy Comment</h3>
+    <p>Click <b>Copy Comment</b> to copy the generated comment to your clipboard.</p>
+    <p>Paste it into <b>KAMAR</b>.</p>
+
+    <h3>Output</h3>
+    <p>First name and pronouns are inserted automatically.</p>
+    <p>&lt;subject&gt; is replaced by the subject name from the Word file.</p>
+  </div>
+</div>
+
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+
+<script>
+let studentData = [];
+let docComments = {};          // keyed by fullHeading from Word file
+let subjectToStudents = {};    // subjectCode (Column F, full string) -> array of student objects
+let allSubjectCodes = [];      // sorted list of unique subject codes
+let selectedSubjectCode = null;
+
+function getPronouns(gender) {
+  if (gender === "F") return { subj:"she", poss:"her", obj:"her" };
+  if (gender === "M") return { subj:"he", poss:"his", obj:"him" };
+  return { subj:"they", poss:"their", obj:"them" };
+}
+
+function updateComment() {
+  const inputValue = document.getElementById("studentInput").value.trim();
+  const fullHeading = document.getElementById("subjectSelect").value;
+  const subjectObj = docComments[fullHeading];
+  if (!subjectObj) return;
+
+  const subject = subjectObj.subjectName;
+  const student = studentData.find(s => s.label === inputValue);
+  if (!student) {
+    document.getElementById("output").value = "";
+    return;
+  }
+
+  const { firstName, gender } = student;
+  const p = getPronouns(gender);
+
+  let outputText = "";
+  document.querySelectorAll(".comment-block").forEach(block => {
+    let goodIntro = block.querySelector(".goodIntro").value || "";
+    let workIntro = block.querySelector(".workIntro").value || "";
+
+    goodIntro = goodIntro
+      .replace(/<Name>/g, firstName)
+      .replace(/<he>/g, p.subj)
+      .replace(/<his>/g, p.poss);
+
+    workIntro = workIntro
+      .replace(/<Name>/g, firstName)
+      .replace(/<he>/g, p.subj)
+      .replace(/<his>/g, p.poss)
+      .replace(/<subject>/g, subject);
+
+    const good = Array.from(block.querySelectorAll(".good"))
+      .map(sel => sel.value)
+      .filter(Boolean)
+      .map(s => s
+        .replace(/<Name>/g, firstName)
+        .replace(/<he>/g, p.subj)
+        .replace(/<his>/g, p.poss)
+      );
+
+    const work = Array.from(block.querySelectorAll(".work"))
+      .map(sel => sel.value)
+      .filter(Boolean)
+      .map(s => s
+        .replace(/<Name>/g, firstName)
+        .replace(/<he>/g, p.subj)
+        .replace(/<his>/g, p.poss)
+      );
+
+    let introText = goodIntro
+      ? (goodIntro.startsWith(firstName) ? goodIntro : `${firstName} ${goodIntro}`)
+      : "";
+
+    let intro = good.length ? `${introText}\n${good.map(x => "- " + x).join("\n")}` : "";
+    let outro = work.length ? `\n\n${workIntro}\n${work.map(x => "- " + x).join("\n")}` : "";
+    outputText += intro + outro + "\n\n";
+  });
+
+  document.getElementById("output").value = outputText.trim();
+}
+
+/* ------- WORD COMMENTS LOADER ------- */
+document.getElementById("commentInput").addEventListener("change", function(e) {
+  const reader = new FileReader();
+  reader.onload = async function(event) {
+    const arrayBuffer = event.target.result;
+    const result = await mammoth.extractRawText({arrayBuffer});
+    parseWordComments(result.value);
+  };
+  reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+function parseWordComments(text) {
+  // Remove any "Quick links" or leading content before the first real heading
+  text = text.replace(/^.*?Quick\s*links:[\s\S]*?(?=\n\s*#EOY)/i, "");
+
+  // Split into subject sections by #EOY headers
+  const sections = text.split(/\n\s*#EOY\s+/).filter(s => s.trim());
+  docComments = {};
+
+  sections.forEach(section => {
+    const lines = section.split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+
+    const headingLine = lines[0];
+
+    // Only process headings that contain a subject in brackets
+    const match = headingLine.match(/\((.*?)\)/);
+    if (!match) return;
+
+    const subjectName = match[1].trim();
+    const fullHeading = "#EOY " + headingLine.trim();
+
+    // Collect intro lines until the first dashed header
+    let intros = [];
+    let i = 1;
+    for (; i < lines.length; i++) {
+      if (/^-+\s*-+/.test(lines[i])) break;
+      if (lines[i].length > 0) intros.push(lines[i]);
+    }
+
+    // Split intros → first 4 = good, remaining = work
+    const goodIntros = intros.slice(0, 4);
+    const workIntros = intros.slice(4);
+
+    // Parse category blocks
+    const categories = {};
+    let currentCat = null;
+
+    for (; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (/^-+\s*-+/.test(line)) {
+        const name = line.replace(/-+/g, "").replace(/\s+/g, " ").trim();
+        currentCat = name;
+        if (currentCat) categories[currentCat] = [];
+      } else if (currentCat && line.startsWith("-")) {
+        const clean = line.replace(/^-\s*/, "").trim();
+        if (clean) categories[currentCat].push(clean);
+      }
+    }
+
+    docComments[fullHeading] = { subjectName, goodIntros, workIntros, categories };
+  });
+
+  // Populate comment subject dropdown
+  const subjectSelect = document.getElementById("subjectSelect");
+  subjectSelect.innerHTML = "";
+
+  const placeholderOpt = document.createElement("option");
+  placeholderOpt.value = "";
+  placeholderOpt.textContent = "Select a subject…";
+  placeholderOpt.disabled = true;
+  placeholderOpt.selected = true;
+  subjectSelect.appendChild(placeholderOpt);
+
+  Object.keys(docComments).forEach(fullHeading => {
+    const opt = document.createElement("option");
+    opt.value = fullHeading;
+    const subj = docComments[fullHeading].subjectName;
+    opt.textContent = `${fullHeading} – ${subj}`;
+    subjectSelect.appendChild(opt);
+  });
+
+  // Do not auto-load comment blocks; wait for user choice
+  loadCommentsFromSubject();
+}
+
+function loadCommentsFromSubject() {
+  const fullHeading = document.getElementById("subjectSelect").value;
+  if (!docComments[fullHeading]) return;
+
+  const { goodIntros, workIntros, categories } = docComments[fullHeading];
+
+  document.querySelectorAll(".comment-block").forEach(block => {
+    const goodIntroSelect = block.querySelector(".goodIntro");
+    goodIntroSelect.innerHTML = "";
+    goodIntros.forEach(intro => {
+      const opt = document.createElement("option");
+      opt.value = intro;
+      opt.textContent = intro;
+      goodIntroSelect.appendChild(opt);
+    });
+    goodIntroSelect.addEventListener("change", updateComment);
+
+    const workIntroSelect = block.querySelector(".workIntro");
+    workIntroSelect.innerHTML = "";
+    workIntros.forEach(intro => {
+      const opt = document.createElement("option");
+      opt.value = intro;
+      opt.textContent = intro;
+      workIntroSelect.appendChild(opt);
+    });
+    workIntroSelect.addEventListener("change", updateComment);
+
+    const goodContainer = block.querySelector(".good-selects");
+    const workContainer = block.querySelector(".work-selects");
+    createSelects(goodContainer, "good", categories);
+    createSelects(workContainer, "work", categories);
+  });
+}
+
+function createSelects(container, className, categoryList) {
+  container.innerHTML = "";
+  for (const cat in categoryList) {
+    const row = document.createElement("div");
+    row.className = "field-row";
+
+    const label = document.createElement("label");
+    label.textContent = cat;
+
+    const select = document.createElement("select");
+    select.className = className;
+
+    const emptyOpt = document.createElement("option");
+    emptyOpt.value = "";
+    emptyOpt.textContent = "";
+    select.appendChild(emptyOpt);
+
+    categoryList[cat].forEach(text => {
+      const option = document.createElement("option");
+      option.value = text;
+      option.textContent = text;
+      select.appendChild(option);
+    });
+
+    select.addEventListener("change", updateComment);
+    select.addEventListener("keydown", e => {
+      if (e.key === "Delete") {
+        select.selectedIndex = 0;
+        updateComment();
+      }
+    });
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "➕";
+    btn.className = "dup-btn";
+    btn.onclick = () => {
+      const clone = row.cloneNode(true);
+      const newSelect = clone.querySelector("select");
+      newSelect.selectedIndex = 0;
+      newSelect.addEventListener("change", updateComment);
+      newSelect.addEventListener("keydown", e => {
+        if (e.key === "Delete") {
+          newSelect.selectedIndex = 0;
+          updateComment();
+        }
+      });
+      const cloneBtn = clone.querySelector("button");
+      cloneBtn.textContent = "❌";
+      cloneBtn.className = "remove-btn";
+      cloneBtn.onclick = () => clone.remove();
+      row.insertAdjacentElement("afterend", clone);
+    };
+
+    row.appendChild(label);
+    row.appendChild(select);
+    row.appendChild(btn);
+    container.appendChild(row);
+  }
+}
+
+/* ------- EXCEL / CSV STUDENT LOADER ------- */
+document.getElementById("fileInput").addEventListener("change", function (e) {
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    const datalist = document.getElementById("studentList");
+    datalist.innerHTML = "";
+    studentData = [];
+    subjectToStudents = {};
+    allSubjectCodes = [];
+    selectedSubjectCode = null;
+    document.getElementById("subjectCardContainer").innerHTML = "";
+    document.getElementById("subjectStudentList").textContent =
+      "Choose a subject to see students.";
+
+    // Expect:
+    // 0: First Name
+    // 1: Last Name
+    // 2: Preferred First Name
+    // 3: Gender
+    // 4: Year Level
+    // 5: All Subjects with Teachers (comma-separated)
+    rows.slice(1).forEach(row => {
+      if (row[0] && row[1] && row[2] && row[3] && row[4]) {
+        const subjectsString = (row[5] || "").toString();
+        const subjectCodes = subjectsString
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean); // full codes including teacher (Option A)
+
+        const student = {
+          firstName: row[0],
+          lastName: row[1],
+          preferredName: row[2],
+          gender: row[3],
+          yearLevel: row[4],
+          subjects: subjectCodes,
+          label: `Year ${row[4]} - ${row[0]} ${row[1]} (${row[2]})`
+        };
+
+        studentData.push(student);
+
+        const option = document.createElement("option");
+        option.value = student.label;
+        datalist.appendChild(option);
+
+        // Index by subject code (full code incl. teacher)
+        subjectCodes.forEach(code => {
+          if (!subjectToStudents[code]) subjectToStudents[code] = [];
+          subjectToStudents[code].push(student);
+        });
+      }
+    });
+
+    allSubjectCodes = Object.keys(subjectToStudents).sort((a, b) => a.localeCompare(b));
+    renderSubjectList("");
+  };
+  reader.readAsArrayBuffer(e.target.files[0]);
+});
+
+/* ------- SUBJECT PANEL LOGIC ------- */
+function renderSubjectList(filter) {
+  const container = document.getElementById("subjectCardContainer");
+  container.innerHTML = "";
+
+  const query = (filter || "").toLowerCase();
+
+  const codes = allSubjectCodes.filter(code =>
+    code.toLowerCase().includes(query)
+  );
+
+  if (codes.length === 0) {
+    const p = document.createElement("p");
+    p.style.margin = "0.2em";
+    p.textContent = "No subjects match the search.";
+    container.appendChild(p);
+    return;
+  }
+
+  codes.forEach(code => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "subject-pill";
+    if (code === selectedSubjectCode) btn.classList.add("selected");
+    btn.textContent = code;
+    btn.onclick = () => handleSubjectClick(code);
+    container.appendChild(btn);
+  });
+}
+
+function handleSubjectClick(code) {
+  selectedSubjectCode = code;
+
+  // Re-render subject list to update selected highlight
+  renderSubjectList(document.getElementById("subjectSearch").value);
+
+  // Build student list for this subject
+  const listDiv = document.getElementById("subjectStudentList");
+  listDiv.innerHTML = "";
+
+  const students = (subjectToStudents[code] || []).slice();
+
+  // Sort alphabetically: last name, then first name
+  students.sort((a, b) => {
+    const ln = a.lastName.localeCompare(b.lastName);
+    if (ln !== 0) return ln;
+    return a.firstName.localeCompare(b.firstName);
+  });
+
+  if (students.length === 0) {
+    listDiv.textContent = "No students found for this subject.";
+    return;
+  }
+
+  students.forEach(stu => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "student-pill";
+    btn.innerHTML = `<span class="year">Y${stu.yearLevel}</span>${stu.firstName} ${stu.lastName} (${stu.preferredName})`;
+    btn.onclick = () => {
+
+  // 1. Save student to hidden input so updateComment() works
+  const studentInput = document.getElementById("studentInput");
+  studentInput.value = stu.label;
+
+  // 2. Remove highlight from all students
+  document.querySelectorAll(".student-pill").forEach(el => {
+    el.classList.remove("selected-student");
+  });
+
+  // 3. Add highlight to the clicked one
+  btn.classList.add("selected-student");
+
+  // 4. Update comment box
+  updateComment();
+};
+
+    listDiv.appendChild(btn);
+  });
+}
+
+document.getElementById("subjectSearch").addEventListener("input", e => {
+  renderSubjectList(e.target.value);
+});
+
+/* ------- OTHER EVENT HOOKS ------- */
+document.getElementById("subjectSelect").addEventListener("change", loadCommentsFromSubject);
+document.getElementById("studentInput").addEventListener("input", updateComment);
+
+// Auto-select full name on click, allow Delete to clear
+document.getElementById("studentInput").addEventListener("focus", e => e.target.select());
+document.getElementById("studentInput").addEventListener("keydown", e => {
+  if (e.key === "Delete") {
+    e.target.value = "";
+    updateComment();
+  }
+});
+
+function copyToClipboard() {
+  const text = document.getElementById("output").value;
+  if (!text) return;
+  navigator.clipboard.writeText(text);
+}
+
+function resetComments() {
+  document.querySelectorAll("select").forEach(sel => sel.selectedIndex = 0);
+  document.getElementById("output").value = "";
+}
+
+function clearName() {
+  document.getElementById("studentInput").value = "";
+  updateComment();
+}
+
+/* ------- INSTRUCTIONS MODAL ------- */
+const instructionsBtn = document.getElementById("instructionsBtn");
+const instructionsModal = document.getElementById("instructionsModal");
+const closeBtn = document.getElementById("closeInstructions");
+
+instructionsBtn.onclick = () => { instructionsModal.style.display = "flex"; };
+closeBtn.onclick = () => { instructionsModal.style.display = "none"; };
+window.onclick = (e) => { if (e.target === instructionsModal) instructionsModal.style.display = "none"; };
+
+// Keyboard shortcut: press "?" to open instructions
+window.addEventListener("keydown", (e) => {
+  if (e.key === "?") {
+    instructionsModal.style.display = "flex";
+  }
+});
+</script>
+</body>
+</html>
