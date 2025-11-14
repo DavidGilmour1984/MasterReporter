@@ -461,44 +461,64 @@
 <!-- Instructions Modal -->
 <div id="instructionsModal">
   <div id="instructionsContent">
-    <button id="closeInstructions">&times;</button>
-    <h2>Instructions</h2>
+  <button id="closeInstructions">&times;</button>
+  <h2>Instructions</h2>
 
-    <h3>Load Files</h3>
-    <p>Click <b>Load Names</b> to upload your student list spreadsheet (including subject codes in Column F).</p>
-    <p>Click <b>Load Comments</b> to upload the prepared comment bank Word file.</p>
+  <h3>Load Files</h3>
+  <p>Click <b>Load Names</b> to upload your student list spreadsheet. This must include the full subject codes in Column F.</p>
+  <p>Click <b>Load Comments</b> to upload the Word comment bank file containing the #EOY headings and comment sets.</p>
 
-    <h3>Subjects & Classes</h3>
-    <p>Use the <b>Subjects</b> panel on the left:</p>
-    <ul>
-      <li>Search by subject code (as it appears in Column F of the CSV).</li>
-      <li>Click a subject to see all students enrolled in that subject.</li>
-      <li>Students are listed alphabetically; click a student to load their name into the generator.</li>
-    </ul>
+  <h3>Subjects & Classes (Left Panel)</h3>
+  <p>The left panel allows you to work subject-first:</p>
+  <ul>
+    <li>Search for a subject code using the search box.</li>
+    <li>Click a subject (e.g., <b>09SCI-DCG</b>) to view all students who take that subject.</li>
+    <li>The list of students will appear below, sorted alphabetically.</li>
+    <li>Clicking a student will select them and generate comments using the correct templates.</li>
+  </ul>
 
-    <h3>Select Student & Comment Subject</h3>
-    <p>You can also start typing a name in the <b>Search student</b> box (auto-complete).</p>
-    <p>Pick a subject from the <b>Comment subject</b> dropdown (from the Word comment bank headings).</p>
+  <h3>Automatic Comment Bank Selection</h3>
+  <p>The generator automatically chooses the correct set of comments for the subject you click.</p>
+  <ul>
+    <li>If you click <b>09SCI-DCG</b>, it automatically loads the <b>09SCI</b> comment bank.</li>
+    <li>If you click <b>12BIO-PQR</b>, it automatically loads the <b>12BIO</b> comment bank.</li>
+    <li>You do not need to choose from the dropdown unless you want to override the automatic selection.</li>
+  </ul>
 
-    <h3>Choose Comments</h3>
-    <ul>
-      <li><b>Does well in...</b> → positive intro + dropdowns for strengths.</li>
-      <li><b>Work on...</b> → improvement intro + dropdowns for next steps.</li>
-    </ul>
-    <p>Use ➕ to duplicate a dropdown row, and ❌ to remove one.</p>
+  <h3>Selecting Students</h3>
+  <p>When you click a student:</p>
+  <ul>
+    <li>Their name is automatically inserted into the generator.</li>
+    <li>They highlight in green so you can see who you are writing for.</li>
+    <li>The comment output updates instantly.</li>
+  </ul>
 
-    <h3>Editing Shortcuts</h3>
-    <p>Use <b>Clear Name</b> to wipe the student name.</p>
-    <p>Use <b>Clear Comments</b> to clear all dropdowns and the output.</p>
+  <h3>Comment Blocks</h3>
+  <p>Each subject has “Does well in…” and “Work on…” sections:</p>
+  <ul>
+    <li>Select a positive introduction and any number of strengths.</li>
+    <li>Select an improvement introduction and any number of next steps.</li>
+    <li>Use <b>+</b> to duplicate a row and <b>×</b> to remove one.</li>
+  </ul>
 
-    <h3>Copy Comment</h3>
-    <p>Click <b>Copy Comment</b> to copy the generated comment to your clipboard.</p>
-    <p>Paste it into <b>KAMAR</b>.</p>
+  <h3>Editing & Resetting</h3>
+  <ul>
+    <li><b>Clear Name</b> removes the selected student.</li>
+    <li><b>Clear Comments</b> resets all dropdowns.</li>
+    <li><b>Copy Comment</b> copies the generated text to your clipboard.</li>
+  </ul>
 
-    <h3>Output</h3>
-    <p>First name and pronouns are inserted automatically.</p>
-    <p>&lt;subject&gt; is replaced by the subject name from the Word file.</p>
-  </div>
+  <h3>Output</h3>
+  <p>The output box shows the completed comment. It automatically inserts:</p>
+  <ul>
+    <li>the student’s first name,</li>
+    <li>correct pronouns based on gender,</li>
+    <li>the subject name from the comment bank.</li>
+  </ul>
+
+  <p>You can paste the finished comment directly into <b>KAMAR</b>.</p>
+</div>
+
 </div>
 
 
@@ -860,7 +880,7 @@ function renderSubjectList(filter) {
 function handleSubjectClick(code) {
   selectedSubjectCode = code;
 
-  // Re-render subject list to update selected highlight
+  // Re-render subject list for selection highlight
   renderSubjectList(document.getElementById("subjectSearch").value);
 
   // Build student list for this subject
@@ -869,7 +889,7 @@ function handleSubjectClick(code) {
 
   const students = (subjectToStudents[code] || []).slice();
 
-  // Sort alphabetically: last name, then first name
+  // Sort students
   students.sort((a, b) => {
     const ln = a.lastName.localeCompare(b.lastName);
     if (ln !== 0) return ln;
@@ -886,27 +906,51 @@ function handleSubjectClick(code) {
     btn.type = "button";
     btn.className = "student-pill";
     btn.innerHTML = `<span class="year">Y${stu.yearLevel}</span>${stu.firstName} ${stu.lastName} (${stu.preferredName})`;
+
     btn.onclick = () => {
+      const studentInput = document.getElementById("studentInput");
+      studentInput.value = stu.label;
 
-  // 1. Save student to hidden input so updateComment() works
-  const studentInput = document.getElementById("studentInput");
-  studentInput.value = stu.label;
+      // Highlight the selected student
+      document.querySelectorAll(".student-pill").forEach(el =>
+        el.classList.remove("selected-student")
+      );
+      btn.classList.add("selected-student");
 
-  // 2. Remove highlight from all students
-  document.querySelectorAll(".student-pill").forEach(el => {
-    el.classList.remove("selected-student");
-  });
-
-  // 3. Add highlight to the clicked one
-  btn.classList.add("selected-student");
-
-  // 4. Update comment box
-  updateComment();
-};
+      updateComment();
+    };
 
     listDiv.appendChild(btn);
   });
+
+  /* -------------------------------------------------------------
+     NEW FEATURE: AUTO-SELECT CORRECT COMMENT BANK FROM WORD FILE
+     ------------------------------------------------------------- */
+
+  // Extract the base subject code (e.g. from "09SCI-DCG" → "09SCI")
+  const base = code.split("-")[0].trim().toUpperCase();
+
+  // Find the correct #EOY heading in docComments
+  let bestMatch = null;
+  for (const heading in docComments) {
+    if (heading.toUpperCase().includes(base)) {
+      bestMatch = heading;
+      break;
+    }
+  }
+
+  if (bestMatch) {
+    const subjectSelect = document.getElementById("subjectSelect");
+    subjectSelect.value = bestMatch;
+
+    // Load the correct intro/categories
+    loadCommentsFromSubject();
+
+    // Refresh the comment for the currently selected student (if any)
+    updateComment();
+  }
 }
+
 
 document.getElementById("subjectSearch").addEventListener("input", e => {
   renderSubjectList(e.target.value);
