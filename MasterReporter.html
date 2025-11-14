@@ -150,15 +150,15 @@
     margin-right: 0.3em;
   }
 
-  /* Top row in main panel */
-  .top-row {
+.top-row {
     display: flex;
     flex-wrap: wrap;
     gap: 1em;
-    align-items: flex-start;
+    align-items: center;    /* FIX: vertically align all children */
     justify-content: flex-start;
     margin-bottom: 1em;
-  }
+}
+
 
   .button-container {
     display: flex;
@@ -355,7 +355,6 @@
   <h1>Report Comment Generator</h1>
   <button id="instructionsBtn">Instructions</button>
 </header>
-
 <div class="page-layout">
 
   <!-- LEFT COLUMN: SUBJECT + STUDENT CARDS -->
@@ -363,41 +362,37 @@
 
     <!-- Subject search + list -->
     <div class="side-card">
-      <h2>Subjects</h2>
+      <h2>Classes</h2>
       <input id="subjectSearch" placeholder="Search subject code…" />
-      <div id="subjectCardContainer">
-        <!-- Subject buttons go here -->
-      </div>
+      <div id="subjectCardContainer"></div>
     </div>
 
     <!-- Students in selected subject -->
     <div class="side-card">
-      <h2>Students in subject</h2>
+      <h2>Class List</h2>
       <div id="subjectStudentList">
-        Load Students and choose a subject to see students.
+        Load StudentList and choose a subject to see students.
       </div>
     </div>
 
   </aside>
 
-  <!-- RIGHT COLUMN: EXISTING CONTROLS + COMMENT AREA -->
+  <!-- RIGHT COLUMN -->
   <main class="main-panel">
 
-    <!-- Top row: buttons + file load + comment subject dropdown -->
+    <!-- Top row -->
     <div class="top-row">
 
       <div class="button-container">
         <button style="background:#43a047;" onmouseover="this.style.background='#2e7d32'" onmouseout="this.style.background='#43a047'" onclick="copyToClipboard()">Copy Comment</button>
         <button onclick="clearName()">Clear Name</button>
         <button onclick="resetComments()">Clear Comments</button>
-
       </div>
 
       <!-- Hidden file inputs -->
       <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;">
       <input type="file" id="commentInput" accept=".docx" style="display:none;">
 
-      <!-- Buttons + dropdown in one row -->
       <div style="display:flex; align-items:center; gap:0.7em; flex-wrap:wrap;">
 
         <button
@@ -405,7 +400,7 @@
           onmouseover="this.style.background='#ef6c00'"
           onmouseout="this.style.background='#f57c00'"
           onclick="document.getElementById('fileInput').click();">
-          Load Students
+          Load StudentList
         </button>
 
         <button
@@ -416,43 +411,57 @@
           Load Comments
         </button>
 
-        <!-- Comment subject dropdown moved here -->
-        <select id="subjectSelect"
-                style="padding:0.6em; font-size:1em; border-radius:6px; border:1px solid var(--border); min-width:220px;">
-        </select>
+<div id="subjectSelectWrapper"
+     style="padding:4px; border-radius:6px; display:inline-block; background:white;">
+  <select id="subjectSelect"
+          style="padding:0.6em; font-size:1em; border-radius:6px; border:1px solid var(--border); min-width:220px;">
+  </select>
+</div>
+
 
         <datalist id="studentList"></datalist>
       </div>
 
     </div>
 
-    <!-- Comment blocks wrapper -->
-    <!-- Hidden input used by JS to store selected student -->
-<input id="studentInput" type="text" style="display:none;">
+    <!-- Hidden input -->
+    <input id="studentInput" type="text" style="display:none;">
 
-    <div id="comment-blocks">
-      <div class="row comment-block">
-        <div class="column">
-          <div class="field-row">
-            <label>Does well in...</label>
-            <select class="goodIntro"></select>
-          </div>
-          <div class="good-selects"></div>
-        </div>
+    <!-- NEW FLEX WRAPPER FOR COMMENT BOX + COLUMNS -->
+    <div style="display:flex; gap:1em; width:100%; align-items:flex-start; margin-top:1em;">
 
-        <div class="column">
-          <div class="field-row">
-            <label>Work on...</label>
-            <select class="workIntro"></select>
-          </div>
-          <div class="work-selects"></div>
+      <!-- MOVED COMMENT OUTPUT BOX (LEFT SIDE) -->
+      <div style="flex:1;">
+        <div class="output-container" style="margin:0;">
+          <textarea id="output" readonly
+                    placeholder="Your generated comment will appear here..."
+                    style="width:100%; min-height:260px;">
+          </textarea>
         </div>
       </div>
-    </div>
 
-    <!-- Output -->
-    <div class="output-container">
-      <textarea id="output" readonly></textarea>
+      <!-- RIGHT SIDE: TWO COMMENT COLUMNS -->
+      <div id="comment-blocks" style="flex:2;">
+        <div class="row comment-block">
+          <div class="column">
+            <div class="field-row">
+              <label>Does well in...</label>
+              <select class="goodIntro"></select>
+            </div>
+            <div class="good-selects"></div>
+          </div>
+
+          <div class="column">
+            <div class="field-row">
+              <label>Work on...</label>
+              <select class="workIntro"></select>
+            </div>
+            <div class="work-selects"></div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
   </main>
@@ -461,64 +470,47 @@
 <!-- Instructions Modal -->
 <div id="instructionsModal">
   <div id="instructionsContent">
-  <button id="closeInstructions">&times;</button>
-  <h2>Instructions</h2>
+    <button id="closeInstructions">&times;</button>
+    <h2>Instructions</h2>
 
-  <h3>Load Files</h3>
-  <p>Click <b>Load Students</b> to upload your student list spreadsheet. This must include the full subject codes in Column F.</p>
-  <p>Click <b>Load Comments</b> to upload the Word comment bank file containing the #EOY headings and comment sets.</p>
+    <h3>Load Files</h3>
+    <p>Click <b>Load StudentList</b> to upload your student list spreadsheet. This must include the full subject codes in Column F.</p>
+    <p>Click <b>Load Comments</b> to upload the Word comment bank file containing the #EOY headings and comment sets.</p>
 
-  <h3>Subjects & Classes (Left Panel)</h3>
-  <p>The left panel allows you to work subject-first:</p>
-  <ul>
-    <li>Search for a subject code using the search box.</li>
-    <li>Click a subject (e.g., <b>09SCI-DCG</b>) to view all students who take that subject.</li>
-    <li>The list of students will appear below, sorted alphabetically.</li>
-    <li>Clicking a student will select them and generate comments using the correct templates.</li>
-  </ul>
+    <h3>Subjects & Classes (Left Panel)</h3>
+    <ul>
+      <li>Search for a subject code using the search box.</li>
+      <li>Click a subject to view all students who take that subject.</li>
+      <li>The list of students will appear below.</li>
+      <li>Click a student to load their comment.</li>
+    </ul>
 
-  <h3>Automatic Comment Bank Selection</h3>
-  <p>The generator automatically chooses the correct set of comments for the subject you click.</p>
-  <ul>
-    <li>If you click <b>09SCI-DCG</b>, it automatically loads the <b>09SCI</b> comment bank.</li>
-    <li>If you click <b>12BIO-PQR</b>, it automatically loads the <b>12BIO</b> comment bank.</li>
-    <li>You do not need to choose from the dropdown unless you want to override the automatic selection.</li>
-  </ul>
+    <h3>Automatic Comment Bank Selection</h3>
+    <p>The generator chooses the correct comment bank automatically when selecting a subject.</p>
 
-  <h3>Selecting Students</h3>
-  <p>When you click a student:</p>
-  <ul>
-    <li>Their name is automatically inserted into the generator.</li>
-    <li>They highlight in green so you can see who you are writing for.</li>
-    <li>The comment output updates instantly.</li>
-  </ul>
+    <h3>Selecting Students</h3>
+    <ul>
+      <li>Their name appears automatically.</li>
+      <li>They highlight green.</li>
+      <li>The comment output updates instantly.</li>
+    </ul>
 
-  <h3>Comment Blocks</h3>
-  <p>Each subject has “Does well in…” and “Work on…” sections:</p>
-  <ul>
-    <li>Select a positive introduction and any number of strengths.</li>
-    <li>Select an improvement introduction and any number of next steps.</li>
-    <li>Use <b>+</b> to duplicate a row and <b>×</b> to remove one.</li>
-  </ul>
+    <h3>Comment Blocks</h3>
+    <ul>
+      <li>Select positive and improvement statements.</li>
+    </ul>
 
-  <h3>Editing & Resetting</h3>
-  <ul>
-    <li><b>Clear Name</b> removes the selected student.</li>
-    <li><b>Clear Comments</b> resets all dropdowns.</li>
-    <li><b>Copy Comment</b> copies the generated text to your clipboard.</li>
-  </ul>
+    <h3>Editing & Resetting</h3>
+    <ul>
+      <li><b>Clear Name</b> removes the student.</li>
+      <li><b>Clear Comments</b> resets dropdowns.</li>
+      <li><b>Copy Comment</b> copies the output.</li>
+    </ul>
 
-  <h3>Output</h3>
-  <p>The output box shows the completed comment. It automatically inserts:</p>
-  <ul>
-    <li>the student’s first name,</li>
-    <li>correct pronouns based on gender,</li>
-    <li>the subject name from the comment bank.</li>
-  </ul>
+    <h3>Output</h3>
+    <p>Automatically inserts names, pronouns, and subject.</p>
 
-  <p>You can paste the finished comment directly into <b>KAMAR</b>.</p>
-</div>
-
+  </div>
 </div>
 
 
@@ -880,16 +872,15 @@ function renderSubjectList(filter) {
 function handleSubjectClick(code) {
   selectedSubjectCode = code;
 
-  // Re-render subject list for selection highlight
+  // Re-render subject list for highlight
   renderSubjectList(document.getElementById("subjectSearch").value);
 
-  // Build student list for this subject
+  // Build student list
   const listDiv = document.getElementById("subjectStudentList");
   listDiv.innerHTML = "";
 
   const students = (subjectToStudents[code] || []).slice();
 
-  // Sort students
   students.sort((a, b) => {
     const ln = a.lastName.localeCompare(b.lastName);
     if (ln !== 0) return ln;
@@ -911,7 +902,6 @@ function handleSubjectClick(code) {
       const studentInput = document.getElementById("studentInput");
       studentInput.value = stu.label;
 
-      // Highlight the selected student
       document.querySelectorAll(".student-pill").forEach(el =>
         el.classList.remove("selected-student")
       );
@@ -920,61 +910,101 @@ function handleSubjectClick(code) {
       updateComment();
     };
 
-    listDiv.appendChild(btn);
+       listDiv.appendChild(btn);
   });
 
-  /* -------------------------------------------------------------
-     NEW FEATURE: AUTO-SELECT CORRECT COMMENT BANK FROM WORD FILE
-     ------------------------------------------------------------- */
+  // AUTO-MATCH COMMENT BANK FOR THIS SUBJECT
+  applyMatchingForSubject(code);
 
-  // Extract the base subject code (e.g. from "09SCI-DCG" → "09SCI")
-// NEW: Extract the subject code between the two hyphens
-// Example: "9PB-09SCI-DCG" -> "09SCI"
-let base = null;
-const parts = code.split("-");
-if (parts.length >= 3) {
-  base = parts[1].trim().toUpperCase();   // middle section
-} else {
-  // fallback: original behaviour
-  base = code.split("-")[0].trim().toUpperCase();
 }
 
-  // Find the correct #EOY heading in docComments
-  let bestMatch = null;
-const upperBase = base.toUpperCase();
+/* -------------------------------------------------------------
+   AUTO-SELECT COMMENT BANK (3 match levels: green/orange/red)
+   ------------------------------------------------------------- */
+(function() {
 
-// 1️⃣ Exact subject-code match inside parentheses e.g. (Physics – 11PHX)
-for (const heading in docComments) {
-  const match = heading.match(/\((.*?)\)/); 
-  if (match && match[1].toUpperCase() === upperBase) {
-    bestMatch = heading;
-    break;
-  }
-}
+  window.applyMatchingForSubject = function(code) {
 
-// 2️⃣ Otherwise match whole-word only (NOT partial)
-if (!bestMatch) {
-  for (const heading in docComments) {
-    const words = heading.toUpperCase().split(/[^A-Z0-9]+/);
-    if (words.includes(upperBase)) {
-      bestMatch = heading;
-      break;
-    }
-  }
-}
+    // -------------------------------
+    // STEP 1 — Extract usable token
+    // -------------------------------
+    let base = null;
+    const parts = code.split("-").map(p => p.trim().toUpperCase());
 
+    let subjectToken = parts.find(p => /^[0-9]{2}[A-Z]{3}$/.test(p));
 
-  if (bestMatch) {
-    const subjectSelect = document.getElementById("subjectSelect");
-    subjectSelect.value = bestMatch;
+    if (subjectToken) base = subjectToken;
+    else if (parts.length >= 2) base = parts[parts.length - 2];
+    else base = parts[0];
 
-    // Load the correct intro/categories
+    const upperBase = base.toUpperCase();
+
+    // -------------------------------
+    // STEP 2 — Match score
+    // -------------------------------
+    let bestMatch = null;
+    let bestScore = -1;
+
+    Object.keys(docComments).forEach(heading => {
+      const words = heading.toUpperCase().split(/[^0-9A-Z]+/).filter(Boolean);
+      const token = words.find(w => /^[0-9]{2}[A-Z]{3}$/.test(w));
+      if (!token) return;
+
+      let score = 0;
+      if (token === upperBase) score = 2;
+      else if (token.slice(0,4) === upperBase.slice(0,4)) score = 1;
+      else score = 0;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = heading;
+      }
+    });
+
+    // -------------------------------
+    // STEP 3 — Apply colours
+    // -------------------------------
+    const select = document.getElementById("subjectSelect");
+    const wrapper = document.getElementById("subjectSelectWrapper");
+
+    // Reset
+    wrapper.style.backgroundColor = "white";
+    wrapper.style.border = "1px solid var(--border)";
+    select.style.backgroundColor = "white";
+    select.style.color = "black";
+
+    if (!bestMatch) return;
+
+    select.value = bestMatch;
     loadCommentsFromSubject();
-
-    // Refresh the comment for the currently selected student (if any)
     updateComment();
-  }
-}
+
+    // Apply full element colour (wrapper + select)
+    if (bestScore === 2) {
+      // GREEN
+      wrapper.style.backgroundColor = "#c8e6c9";
+      wrapper.style.border = "2px solid #2e7d32";
+      select.style.backgroundColor = "#c8e6c9";
+      select.style.color = "#1b5e20";
+
+    } else if (bestScore === 1) {
+      // ORANGE
+      wrapper.style.backgroundColor = "#ffe0b2";
+      wrapper.style.border = "2px solid #ef6c00";
+      select.style.backgroundColor = "#ffe0b2";
+      select.style.color = "#e65100";
+
+    } else {
+      // RED
+      wrapper.style.backgroundColor = "#ffcdd2";
+      wrapper.style.border = "2px solid #c62828";
+      select.style.backgroundColor = "#ffcdd2";
+      select.style.color = "#b71c1c";
+    }
+  };
+
+})();
+
 
 
 document.getElementById("subjectSearch").addEventListener("input", e => {
