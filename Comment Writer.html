@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Comment Bank Editor – Text Preview</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1 {
+    margin: 0 0 10px 0;
+    color: #1e88e5;
+  }
+
+  button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button:hover { background:#1e40af; }
+
+  .small-btn {
+    padding: 4px 8px;
+    font-size: 13px;
+    margin-top: 6px;
+    margin-right: 4px;
+  }
+
+  .toolbar {
+    margin-bottom: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .toolbar label {
+    font-weight: bold;
+    margin-right: 4px;
+  }
+
+  #fileTitle {
+    padding: 6px 8px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    min-width: 260px;
+  }
+
+  .heading-block {
+    border: 2px solid #2563eb;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    background: #f0f7ff;
+  }
+
+  .heading-toggle {
+    background:#2563eb;
+    color:white;
+    padding:8px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .heading-toggle span.title {
+    font-weight:bold;
+  }
+
+  .heading-content {
+    margin-top:8px;
+  }
+
+  .inline-row {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .inline-row label {
+    font-weight:bold;
+    min-width:70px;
+  }
+
+  .inline-row input[type=text] {
+    flex:1;
+    min-width:160px;
+  }
+
+  input[type=text] {
+    width:100%;
+    padding:6px 8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+  }
+
+  .split-boxes {
+    display:flex;
+    gap:12px;
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+
+  .split-box {
+    flex:1 1 260px;
+  }
+
+  .split-box label {
+    font-weight:bold;
+  }
+
+  textarea {
+    width:100%;
+    min-height:90px;
+    font-size:14px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    padding:6px 8px;
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+  }
+
+  .categoryContainer {
+    margin-top:8px;
+  }
+
+  .category-block {
+    border:1px solid #999;
+    padding:8px 10px;
+    border-radius:10px;
+    background:#ffffff;
+    margin-top:8px;
+  }
+
+  .category-block label {
+    font-weight:bold;
+  }
+
+  /* Preview box */
+  #previewWrapper {
+    margin-top:18px;
+  }
+
+  #docPreview {
+    width:100%;
+    min-height:260px;
+    border-radius:10px;
+    border:1px solid #999;
+    padding:10px;
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+    font-size:14px;
+    white-space:pre;
+  }
+</style>
+</head>
+<body>
+
+<h1>Comment Bank Editor</h1>
+
+<div class="toolbar">
+  <label for="fileTitle">File title:</label>
+  <input id="fileTitle" type="text" value="Science EOY comment banks" />
+  <button onclick="addHeading()">Add New Subject</button>
+  <button onclick="copyPreview()">Copy All Text</button>
+</div>
+
+<div id="editorArea"></div>
+
+<div id="previewWrapper">
+  <h2 style="font-size:18px; margin:10px 0 6px 0; color:#1e88e5;">Live DOC text (copy into Word)</h2>
+  <textarea id="docPreview" readonly></textarea>
+</div>
+
+<script>
+let headingCounter = 0;
+
+/* ---------------------------
+   Helper: bind inputs to recalc
+--------------------------- */
+function bindRecalc(root) {
+  root.querySelectorAll("input[type=text], textarea").forEach(el => {
+    el.addEventListener("input", rebuildPreview);
+  });
+}
+
+/* ---------------------------
+   Add a Subject block
+--------------------------- */
+function addHeading(title = "", subject = "", doesLines = [], workLines = [], categories = {}) {
+  headingCounter++;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "heading-block";
+  wrapper.dataset.index = headingCounter;
+
+  const headingId = "heading-" + headingCounter;
+
+  wrapper.innerHTML = `
+    <div class="heading-toggle">
+      <span class="title">${title || "New Subject"}</span>
+      <span style="font-size:13px;">click to expand/collapse</span>
+    </div>
+    <div class="heading-content">
+      <div class="inline-row">
+        <label>Heading:</label>
+        <input type="text" class="headingTitle" placeholder="e.g. SCI 07SCI" />
+        <label>Subject:</label>
+        <input type="text" class="subjectName" placeholder="e.g. Science" />
+      </div>
+
+      <div class="split-boxes">
+        <div class="split-box">
+          <label>Does well&nbsp;(first 4 lines used as positives):</label>
+          <textarea class="doesBox" placeholder="<Name> is beginning to demonstrate that <he> can:&#10;<Name> has demonstrated that <he> can:">${doesLines.join("\n")}</textarea>
+        </div>
+        <div class="split-box">
+          <label>Work on&nbsp;(remaining lines used as targets):</label>
+          <textarea class="workBox" placeholder="Further improvements in <subject> will be gained when <Name> can:&#10;To deepen <his> understanding in <subject>, <Name> should:">${workLines.join("\n")}</textarea>
+        </div>
+      </div>
+
+      <div class="categoryContainer"></div>
+
+      <button class="small-btn" onclick="addCategory(this)">Add Category</button>
+      <button class="small-btn" style="background:#e53935"
+              onclick="this.closest('.heading-block').remove(); rebuildPreview();">
+        Delete Subject
+      </button>
+    </div>
+  `;
+
+  const toggle = wrapper.querySelector(".heading-toggle");
+  const content = wrapper.querySelector(".heading-content");
+  content.style.display = "block";
+  toggle.addEventListener("click", (e) => {
+    if (e.target.tagName.toLowerCase() === "button" ||
+        e.target.classList.contains("small-btn")) return;
+    content.style.display = (content.style.display === "none" ? "block" : "none");
+  });
+
+  const headingInput = wrapper.querySelector(".headingTitle");
+  const subjectInput = wrapper.querySelector(".subjectName");
+
+  headingInput.value = title;
+  subjectInput.value = subject;
+
+  headingInput.addEventListener("input", () => {
+    const t = headingInput.value.trim() || "New Subject";
+    wrapper.querySelector(".heading-toggle .title").textContent = t;
+  });
+
+  document.getElementById("editorArea").appendChild(wrapper);
+
+  // Existing categories
+  const container = wrapper.querySelector(".categoryContainer");
+  Object.keys(categories).forEach(cat => {
+    addCategory(wrapper.querySelector(".small-btn"), cat, categories[cat]);
+  });
+
+  bindRecalc(wrapper);
+  rebuildPreview();
+}
+
+/* ---------------------------
+   Add a Category block
+--------------------------- */
+function addCategory(btn, name = "", comments = []) {
+  const parent = btn.closest(".heading-content").querySelector(".categoryContainer");
+
+  const box = document.createElement("div");
+  box.className = "category-block";
+
+  box.innerHTML = `
+    <label>Category heading (e.g. Effort/Attitude):</label>
+    <input type="text" class="catName" value="${name}">
+    <br><br>
+    <label>Comments (one per line):</label>
+    <textarea class="catComments">${comments.join("\n")}</textarea>
+    <button class="small-btn" style="background:#e53935; margin-top:6px;"
+            onclick="this.parentNode.remove(); rebuildPreview();">
+      Delete Category
+    </button>
+  `;
+
+  parent.appendChild(box);
+  bindRecalc(box);
+  rebuildPreview();
+}
+
+/* ---------------------------
+   Build live DOC text
+--------------------------- */
+function rebuildPreview() {
+  const title = document.getElementById("fileTitle").value.trim();
+  const blocks = Array.from(document.querySelectorAll(".heading-block"));
+  const lines = [];
+
+  if (title) lines.push(title);
+  lines.push("");
+  lines.push("Quick links:");
+
+  // Quick links: #EOY CODE
+  blocks.forEach(b => {
+    const heading = b.querySelector(".headingTitle").value.trim();
+    if (heading) {
+      lines.push(`#EOY ${heading}`);
+    }
+  });
+
+  lines.push("");
+
+  // Full sections
+  blocks.forEach(b => {
+    const heading = b.querySelector(".headingTitle").value.trim();
+    if (!heading) return;
+    const subject = b.querySelector(".subjectName").value.trim();
+
+    lines.push(`#EOY ${heading}${subject ? " (" + subject + ")" : ""}`);
+
+    const doesText = b.querySelector(".doesBox").value.replace(/\r/g,"");
+    const workText = b.querySelector(".workBox").value.replace(/\r/g,"");
+
+    const doesLines = doesText.split("\n").map(s => s.trim()).filter(s => s);
+    const workLines = workText.split("\n").map(s => s.trim()).filter(s => s);
+
+    // Intro lines (does + work) exactly as generator expects
+    doesLines.forEach(l => lines.push(l));
+    workLines.forEach(l => lines.push(l));
+
+    lines.push("");
+
+    // Categories
+    const cats = b.querySelectorAll(".category-block");
+    cats.forEach(cat => {
+      const name = cat.querySelector(".catName").value.trim();
+      const commentsText = cat.querySelector(".catComments").value.replace(/\r/g,"");
+      const comments = commentsText.split("\n").map(s => s.trim()).filter(s => s);
+
+      if (!name && comments.length === 0) return;
+
+      if (name) {
+        lines.push(`- - - - - -${name}- - - - - -`);
+      }
+
+      comments.forEach(c => {
+        lines.push(`- ${c}`);
+      });
+
+      lines.push("");
+    });
+
+    lines.push("");
+  });
+
+  document.getElementById("docPreview").value = lines.join("\n").trimEnd() + "\n";
+}
+
+/* ---------------------------
+   Copy preview
+--------------------------- */
+function copyPreview() {
+  const ta = document.getElementById("docPreview");
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand("copy");
+  } catch(e) {
+    // ignore; user can copy manually
+  }
+}
+
+/* Initial subject for convenience */
+window.addEventListener("DOMContentLoaded", () => {
+  addHeading("SCI 07SCI", "Science");
+});
+</script>
+
+</body>
+</html>
