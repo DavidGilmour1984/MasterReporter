@@ -385,7 +385,6 @@
 
       <div class="button-container">
         <button style="background:#43a047;" onmouseover="this.style.background='#2e7d32'" onmouseout="this.style.background='#43a047'" onclick="copyToClipboard()">Copy Comment</button>
-        <button onclick="resetComments()">Clear Comment</button>
       </div>
 
       <!-- Hidden file inputs -->
@@ -501,7 +500,6 @@
 
     <h3>Editing & Resetting</h3>
     <ul>
-      <li><b>Clear Comment</b> resets dropdowns.</li>
       <li><b>Copy Comment</b> copies the output.</li>
     </ul>
 
@@ -528,8 +526,46 @@ function getPronouns(gender) {
   if (gender === "M") return { subj:"he", poss:"his", obj:"him" };
   return { subj:"they", poss:"their", obj:"them" };
 }
+// ----------------------------------------------------
+//  DUPLICATE HIGHLIGHTING FOR SELECTED COMMENTS
+// ----------------------------------------------------
+function highlightDuplicateComments() {
 
+  // Collect all selected comment text for both sides
+  const allValues = [];
+
+  document.querySelectorAll(".good, .work").forEach(sel => {
+    if (sel.value && sel.value.trim() !== "") {
+      allValues.push(sel.value.trim());
+    }
+  });
+
+  // Count occurrences
+  const counts = {};
+  allValues.forEach(v => counts[v] = (counts[v] || 0) + 1);
+
+  // Apply highlighting
+  document.querySelectorAll(".good, .work").forEach(sel => {
+    const v = sel.value.trim();
+
+    if (v && counts[v] > 1) {
+      // DUPLICATE → highlight red
+      sel.style.backgroundColor = "#ffcdd2";
+      sel.style.color = "#b71c1c";
+      sel.style.border = "2px solid #b71c1c";
+    } else {
+      // NORMAL → remove highlight
+      sel.style.backgroundColor = "";
+      sel.style.color = "";
+      sel.style.border = "";
+    }
+  });
+}
 function updateComment() {
+
+  // highlight duplicate selected comments
+  highlightDuplicateComments();
+
   const inputValue = document.getElementById("studentInput").value.trim();
   const fullHeading = document.getElementById("subjectSelect").value;
   const subjectObj = docComments[fullHeading];
